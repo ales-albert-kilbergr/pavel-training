@@ -15,11 +15,14 @@
     <script type="module">
       const DEFAULT_COLOR = "#ffffff";
       const DEFAULT_BACKGROUND_COLOR = "#c20d0e";
-      const DEFAULT_BORDER_RADIUS = "10px";
+      const DEFAULT_DESKTOP_BORDER_RADIUS = "10px";
+      const DEFAULT_MOBILE_BORDER_RADIUS = "0";
       const DEFAULT_PLACEHOLDER = "- : - : - : -";
       const DEFAULT_MESSAGE = "Time is up!";
       const DEFAULT_FORMAT = "days : hours : minutes : seconds";
       const DEFAULT_TICK_INTERVAL = 1000;
+      const DEFAULT_DESKTOP_FONT_SIZE = "50px";
+      const DEFAULT_MOBILE_FONT_SIZE = "38px";
       /**
        * @class MyCountDown
        * @extends HTMLElement
@@ -48,6 +51,10 @@
              * Placeholder text to be displayed when the target date is not set
              */
             "placeholder",
+            "desktop-font-size",
+            "mobile-font-size",
+            "desktop-border-radius",
+            "mobile-border-radius",
           ];
         }
         /**
@@ -105,6 +112,34 @@
           if (name === "border-radius") {
             this.shadowRoot.host.style.setProperty(
               "--my-count-down-border-radius",
+              newValue
+            );
+          }
+
+          if (name === "desktop-font-size") {
+            this.shadowRoot.host.style.setProperty(
+              "--my-count-down-desktop-font-size",
+              newValue
+            );
+          }
+
+          if (name === "mobile-font-size") {
+            this.shadowRoot.host.style.setProperty(
+              "--my-count-down-mobile-font-size",
+              newValue
+            );
+          }
+
+          if (name === "desktop-border-radius") {
+            this.shadowRoot.host.style.setProperty(
+              "--my-count-down-desktop-border-radius",
+              newValue
+            );
+          }
+
+          if (name === "mobile-border-radius") {
+            this.shadowRoot.host.style.setProperty(
+              "--my-count-down-mobile-border-radius",
               newValue
             );
           }
@@ -178,14 +213,17 @@
               }
               @media (max-width: 600px) {
                 .countdown {
-                  font-size: 50px;
+                  font-size: var(--my-count-down-mobile-font-size, ${DEFAULT_MOBILE_FONT_SIZE});
+                  line-height: var(--my-count-down-mobile-font-size, ${DEFAULT_MOBILE_FONT_SIZE});
+                  border-radius: var(--my-count-down-mobile-border-radius, ${DEFAULT_MOBILE_BORDER_RADIUS});
                   width: 100%;
                 }
               }
               @media (min-width: 601px) {
                 .countdown {
-                  font-size: 80px;
-                  border-radius: var(--my-count-down-border-radius, ${DEFAULT_BORDER_RADIUS});
+                  font-size: var(--my-count-down-desktop-font-size, ${DEFAULT_DESKTOP_FONT_SIZE});
+                  line-height: var(--my-count-down-desktop-font-size, ${DEFAULT_DESKTOP_FONT_SIZE});
+                  border-radius: var(--my-count-down-border-radius, ${DEFAULT_DESKTOP_BORDER_RADIUS});
                   width: 500px;
                 }
               }
@@ -227,12 +265,16 @@
 
     <my-countdown
       target="Jun 20, 2024 13:00:00"
-      message="HOHOHOHORiobiu ioudf"
+      message="Nyní"
       color="#fff"
       background-color="#c20d0e"
-      border-radius="24px"
+      border-radius="10px"
       placeholder="- : - : - : -"
       format="days : hours : minutes : seconds"
+      desktop-font-size="50px"
+      mobile-font-size="38px"
+      desktop-border-radius="10px"
+      mobile-border-radius="0"
     ></my-countdown>
   </body>
 </html>
