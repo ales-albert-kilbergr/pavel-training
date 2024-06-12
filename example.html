@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Příklad s fontem Monoton</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      const DEFAULT_COLOR = "#ffffff";
+      const DEFAULT_BACKGROUND_COLOR = "#c20d0e";
+      const DEFAULT_BORDER_RADIUS = "10px";
+      const DEFAULT_PLACEHOLDER = "- : - : - : -";
+      const DEFAULT_MESSAGE = "Time is up!";
+      const DEFAULT_FORMAT = "days : hours : minutes : seconds";
+      const DEFAULT_TICK_INTERVAL = 1000;
+      /**
+       * @class MyCountDown
+       * @extends HTMLElement
+       *
+       * Generates a countdown timer based on the target date.
+       */
+      class MyCountDown extends HTMLElement {
+        constructor() {
+          super();
+          this.attachShadow({ mode: "open" });
+        }
+        /**
+         * Register the observed attributes
+         *
+         * @returns {Array} List of observed attributes
+         */
+        static get observedAttributes() {
+          return [
+            "target",
+            "message",
+            "font-size",
+            "color",
+            "background-color",
+            "border-radius",
+            /**
+             * Placeholder text to be displayed when the target date is not set
+             */
+            "placeholder",
+          ];
+        }
+        /**
+         * Reacts to the attribute changes
+         *
+         * @param {String} name Name of the attribute which has changed
+         * @param {String} oldValue Old value of the attribute
+         * @param {String} newValue New value of the attribute
+         */
+        attributeChangedCallback(name, oldValue, newValue) {
+          // Watch for the change of the target date and restart the countdown
+          // if needed.
+          if (name === "target") {
+            this.targetDate = new Date(newValue);
+
+            if (this.interval) {
+              clearInterval(this.interval);
+            }
+
+            if (isNaN(this.targetDate.getTime())) {
+              console.warn("Cannot start the count down. Invalid date format");
+              this.renderCountDown();
+              // If the date is invalid, we should not start the countdown
+              // but just clear the interval and render a placeholder
+              return;
+            }
+
+            if (this) this.tick(this.targetDate);
+            this.interval = setInterval(() => {
+              this.tick(this.targetDate);
+            }, DEFAULT_TICK_INTERVAL);
+          }
+
+          if (name === "font-size") {
+            this.shadowRoot.host.style.setProperty(
+              "--my-count-down-font-size",
+              newValue
+            );
+          }
+
+          if (name === "color") {
+            this.shadowRoot.host.style.setProperty(
+              "--my-count-down-color",
+              newValue
+            );
+          }
+
+          if (name === "background-color") {
+            this.shadowRoot.host.style.setProperty(
+              "--my-count-down-background-color",
+              newValue
+            );
+          }
+
+          if (name === "border-radius") {
+            this.shadowRoot.host.style.setProperty(
+              "--my-count-down-border-radius",
+              newValue
+            );
+          }
+        }
+
+        tick(targetDate) {
+          const now = Date.now();
+          const delta = targetDate - now;
+
+          this.renderCountDown(delta);
+        }
+
+        renderCountDown(deltaMs) {
+          const slot = this.shadowRoot.querySelector(".countdown");
+
+          if (!slot) return;
+
+          if (isNaN(deltaMs)) {
+            slot.innerText =
+              this.getAttribute("placeholder") || DEFAULT_PLACEHOLDER;
+            return;
+          }
+          const format = this.getAttribute("format") || DEFAULT_FORMAT;
+
+          const days = Math.floor(deltaMs / (1000 * 60 * 60 * 24));
+          const hours = this.renderNumber(
+            Math.floor((deltaMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+          );
+          const minutes = this.renderNumber(
+            Math.floor((deltaMs % (1000 * 60 * 60)) / (1000 * 60))
+          );
+          const seconds = this.renderNumber(
+            Math.floor((deltaMs % (1000 * 60)) / 1000)
+          );
+
+          slot.innerText =
+            deltaMs <= 0
+              ? this.getAttribute("message") || DEFAULT_MESSAGE
+              : format
+                  .replace("days", days)
+                  .replace("hours", hours)
+                  .replace("minutes", minutes)
+                  .replace("seconds", seconds);
+        }
+        /**
+         * Render the number with leading zero if needed.
+         */
+        renderNumber(number) {
+          return number < 10 ? `0${number}` : number;
+        }
+        /**
+         * Render the static part of the component
+         */
+        render() {
+          this.shadowRoot.innerHTML = `
+            <style>    
+              :host {
+                display: block;
+                display: flex;
+                justify-content: center;
+              }    
+              .countdown {
+                text-align: center;
+                display: flex;
+                justify-content: center;
+                font-family: 'Monoton';
+                color: var(--my-count-down-color, ${DEFAULT_COLOR});
+                background-color: var(--my-count-down-background-color, ${DEFAULT_BACKGROUND_COLOR});
+                padding: 20px;
+                margin: 0;
+              }
+              @media (max-width: 600px) {
+                .countdown {
+                  font-size: 50px;
+                  width: 100%;
+                }
+              }
+              @media (min-width: 601px) {
+                .countdown {
+                  font-size: 80px;
+                  border-radius: var(--my-count-down-border-radius, ${DEFAULT_BORDER_RADIUS});
+                  width: 500px;
+                }
+              }
+            </style>
+            <p class="countdown"></p>
+            `;
+          this.isWrapperRendered = true;
+        }
+
+        connectedCallback() {
+          const font = new FontFace(
+            "Monoton",
+            "url(https://fonts.gstatic.com/s/monoton/v19/5h1aiZUrOngCibe4TkHLQka4BU4.woff2)",
+            {
+              style: "normal",
+              weight: "400",
+              fontDisplay: "swap",
+            }
+          );
+
+          font.load().then((font) => {
+            document.fonts.add(font);
+            this.render();
+            const delta = this.targetDate
+              ? this.targetDate - Date.now()
+              : void 0;
+            this.renderCountDown();
+          });
+        }
+
+        disconnectedCallback() {
+          if (this.interval) {
+            clearInterval(this.interval);
+          }
+        }
+      }
+      customElements.define("my-countdown", MyCountDown);
+    </script>
+
+    <my-countdown
+      target="Jun 20, 2024 13:00:00"
+      message="HOHOHOHORiobiu ioudf"
+      color="#fff"
+      background-color="#c20d0e"
+      border-radius="24px"
+      placeholder="- : - : - : -"
+      format="days : hours : minutes : seconds"
+    ></my-countdown>
+  </body>
+</html>
